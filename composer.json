@@ -1,0 +1,23 @@
+{
+    "name": "megaads/sso-postback",
+    "description": "Post back url for single sign on system",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "MegaAds",
+            "email": "info@megaads.vn"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=5.6.4"
+    },
+    "autoload": {
+        "classmap": [
+            "src"
+        ],
+        "psr-4": {
+            "Megaads\\SsoPostback\\": "src/"
+        }
+    }
+}
