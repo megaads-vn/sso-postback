@@ -2,6 +2,9 @@
 namespace Megaads\SsoPostback\Controllers;
 
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SsoPostbackController extends BaseController 
 {
@@ -14,18 +17,28 @@ class SsoPostbackController extends BaseController
         $retval = [
             'status' => 'fail'
         ];
-        $checkDns = $this->checkDnsCallService();
-        if ( !$checkDns ) {
-            $retval['message'] = 'Invalid domain! Please check again.';
-            return \Response::json($retval);
+        $configUserTable = \Config::get('sso-postback.user_table');
+        $configTableColumn = \Config::get('sso-postback.user_account_column');
+        if ( !\Config::get('sso-postback.debug') ) {
+            $checkDns = $this->checkDnsCallService();
+            if ( !$checkDns ) {
+                $retval['message'] = 'Invalid domain! Please check again.';
+                return \Response::json($retval);
+            }
         }
 
+        if ( !Schema::hasTable($configUserTable) ) {
+            $retval['message'] = 'Invalid table name. Please check configuration file.';
+            return \Response::json($retval);
+        }
+        $tableColumns = DB::getSchemaBuilder()->getColumnListing($configUserTable);
         if ( !Input::has('email') || !Input::has('active') || !Input::has('username')) {
             $retval['message'] = 'Invalid param email or active. Please check again!';
         } else {
             $email = Input::get('email');
             $active = Input::get("active");
-            $user = User::whereRaw("replace(`email`, '.', '') = replace('$email', '.', '')")->first();
+            $username = Input::get("username");
+            $user = DB::table($configUserTable)->whereRaw("replace(`email`, '.', '') = replace('$email', '.', '')")->first();
 
             if (!$user) {
                 $retval['msg'] = "Email doesn't exist.";
@@ -33,26 +46,18 @@ class SsoPostbackController extends BaseController
                     $retval['status'] = 'successful';
                     $retval['msg'] = "Email doesn't exist.";
                 } else {
-                    if (User::where('username', Input::get("username"))->first()) {
-                        User::insert([
-                            'email' => $email,
-                            'username' => Input::get("username") . mt_rand(100,999),
-                            'type' => 'staff',
-                            'full_name' => Input::get('full_name', ''),
-                            'code' => Input::get('code', ''),
-                            'status' => User::STATUS_ACTIVE,
-                        ]);
+                    $insertParams = $this->buildInsertData($tableColumns);
+                    if ( $configTableColumn == 'email' ) {
+                        DB::table($configUserTable)->insert($insertParams);
                     } else {
-                        User::insert([
-                            'email' => $email,
-                            'username' => Input::get("username"),
-                            'type' => 'staff',
-                            'full_name' => Input::get('full_name', ''),
-                            'code' => Input::get('code', ''),
-                            'status' => User::STATUS_ACTIVE,
-                        ]);
+                        $checkUser = DB::table($configUserTable)->where("username", $username)->first();
+                        if ($checkUser) {
+                            $insertParams['username'] = $username . mt_rand(100,999);
+                            DB::table($configUserTable)->insert($insertParams);
+                        } else {
+                            DB::table($configUserTable)->insert($insertParams);
+                        }
                     }
-
                     $retval['status'] = 'successful';
                     $retval['msg'] = "Account created successfully with email $email";
                 }
@@ -65,6 +70,22 @@ class SsoPostbackController extends BaseController
         }
 
         return \Response::json($retval);
+    }
+
+    private function buildInsertData($tableColumns) {
+        unset($tableColumns[0]);
+        $mapColumn = \Config::get('sso-postback.map');
+        $buildData = [];
+        foreach($tableColumns as $column) {
+            $params = [];
+            $getColum = $column;
+            if ( in_array($column, $mapColumn) ) {
+                $getColum = array_search($column, $mapColumn);
+            }
+            $params[$column] = Input::get($getColum, '');
+            $buildData = $buildData + $params;
+        }
+        return $buildData;
     }
 
     private function checkDnsCallService() {

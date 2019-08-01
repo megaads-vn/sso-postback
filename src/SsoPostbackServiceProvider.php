@@ -19,12 +19,25 @@ class GeneratesitemapServiceProvider extends ServiceProvider
                 }
             }
         }
+        $this->publishConfig();
     }
 
     public function register()
     {
     }
 
+    private function publishConfig()
+    {
+        if ( method_exists($this, 'config_path') ) {
+            $path = $this->getConfigPath();
+            $this->publishes([$path => config_path('sso-postback.php')], 'config');
+        }
+    }
+
+    private function getConfigPath()
+    {
+        return __DIR__.'/../config/sso-postback.php';
+    }
     private function checkFrameWork() {
         $findFrameWork = ['laravel/framework','laravel/lumen-framework'];
         $frameworkDeclare = file_get_contents(__DIR__ . '../../../../../composer.json');
