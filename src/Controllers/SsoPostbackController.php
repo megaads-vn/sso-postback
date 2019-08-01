@@ -62,8 +62,8 @@ class SsoPostbackController extends BaseController
                     $retval['msg'] = "Account created successfully with email $email";
                 }
             } else {
-                $status = $active ? User::STATUS_ACTIVE : User::STATUS_INACTIVE;
-                $user->update(['status' => $status]);
+                $status = $active ? \Config::get('sso-postback.active_status') : \Config::get('sso-postback.inactive_status');
+                DB::table($configUserTable)->whereRaw("replace(`email`, '.', '') = replace('$email', '.', '')")->update(['status' => $status]);
                 $retval['status'] = 'successful';
                 $retval['msg'] = "Update user's status to $status";
             }

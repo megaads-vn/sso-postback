@@ -1,16 +1,16 @@
 <?php
-namespace Megaads\Generatesitemap;
+namespace Megaads\SsoPostback;
 
 use Illuminate\Support\ServiceProvider;
 use Megaads\Generatesitemap\Services\SitemapConfigurator;
 use function GuzzleHttp\json_decode;
 
-class GeneratesitemapServiceProvider extends ServiceProvider
+class SsoPostbackServiceProvider extends ServiceProvider
 {
     public function boot()
     {
         $framework = $this->checkFrameWork();
-        if ($framework && $framework['key'] == 'laravel/framework' && $framework['version'] <= 52 ) {
+        if ($framework && $framework['key'] == 'laravel/framework' && $framework['version'] >= 52 ) {
             include __DIR__ . '/routes.php';
         } else {  
             if ( method_exists($this, 'routesAreCached') ) {
