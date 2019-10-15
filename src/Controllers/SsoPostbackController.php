@@ -33,11 +33,11 @@ class SsoPostbackController extends BaseController
             return \Response::json($retval);
         }
         $tableColumns = DB::getSchemaBuilder()->getColumnListing($configUserTable);
-        if ( !Input::has('email') || !Input::has('status') || !Input::has('username')) {
+        if ( !Input::has('email') || !Input::has('active') || !Input::has('username')) {
             $retval['message'] = 'Invalid param email or status. Please check again!';
         } else {
             $email = Input::get('email');
-            $active = Input::get("status");
+            $active = Input::get("active");
             $username = Input::get("username");
             $user = DB::table($configUserTable)->whereRaw("replace(`email`, '.', '') = replace('$email', '.', '')")->first();
 
@@ -63,7 +63,7 @@ class SsoPostbackController extends BaseController
                     $retval['msg'] = "Account created successfully with email $email";
                 }
             } else {
-                $status = $active ? \Config::get('sso-postback.active_status') : \Config::get('sso-postback.inactive_status');
+                $status = $active ? \Config::get('sso-postback.active_status') : \Config::get('sso-postback.deactive_status');
                 DB::table($configUserTable)->whereRaw("replace(`email`, '.', '') = replace('$email', '.', '')")->update(['status' => $status]);
                 $retval['status'] = 'successful';
                 $retval['msg'] = "Update user's status to $status";
@@ -85,7 +85,14 @@ class SsoPostbackController extends BaseController
             if ( in_array($column, $mapColumn) ) {
                 $getColum = array_search($column, $mapColumn);
             }
-            $params[$column] = Input::get($getColum, '');
+            $getValue = Input::get($getColum, '');
+            if ( $getColum == 'active' && $getValue ) {
+                $getValue = \Config::get('sso-postback.active_status');
+            }
+            if ( $getColum == 'active' && !$getValue ) {
+                $getValue = \Config::get('sso-postback.deactive_status');
+            }
+            $params[$column] = $getValue;
             $buildData = $buildData + $params;
         }
         return $buildData;

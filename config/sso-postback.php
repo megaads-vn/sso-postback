@@ -4,9 +4,9 @@ return [
     'user_table' => 'users',
     'user_account_column' => 'email',
     'active_status' => 'active',
-    'deactive_status' => 'deactive',
+    'deactive_status' => 'inactive',
     'map' => [
         'full_name' => 'name',
-        'status' => 'status',
+        'active' => 'status',
     ]
 ];
