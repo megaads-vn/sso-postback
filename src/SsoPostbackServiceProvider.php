@@ -27,10 +27,10 @@ class SsoPostbackServiceProvider extends ServiceProvider
 
     private function publishConfig()
     {
-        if ( method_exists($this, 'config_path') ) {
+        // if ( method_exists($this, 'config_path') ) {
             $path = $this->getConfigPath();
             $this->publishes([$path => config_path('sso-postback.php')], 'config');
-        }
+        // }
     }
 
     private function getConfigPath()
