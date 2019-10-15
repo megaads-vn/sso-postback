@@ -1,1 +1,2 @@
-# sso-postback
+# SSO Postback for Laravel 5
+

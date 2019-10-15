@@ -17,6 +17,7 @@ class SsoPostbackController extends BaseController
         $retval = [
             'status' => 'fail'
         ];
+        
         $configUserTable = \Config::get('sso-postback.user_table');
         $configTableColumn = \Config::get('sso-postback.user_account_column');
         if ( !\Config::get('sso-postback.debug') ) {
@@ -32,11 +33,11 @@ class SsoPostbackController extends BaseController
             return \Response::json($retval);
         }
         $tableColumns = DB::getSchemaBuilder()->getColumnListing($configUserTable);
-        if ( !Input::has('email') || !Input::has('active') || !Input::has('username')) {
-            $retval['message'] = 'Invalid param email or active. Please check again!';
+        if ( !Input::has('email') || !Input::has('status') || !Input::has('username')) {
+            $retval['message'] = 'Invalid param email or status. Please check again!';
         } else {
             $email = Input::get('email');
-            $active = Input::get("active");
+            $active = Input::get("status");
             $username = Input::get("username");
             $user = DB::table($configUserTable)->whereRaw("replace(`email`, '.', '') = replace('$email', '.', '')")->first();
 
@@ -75,7 +76,9 @@ class SsoPostbackController extends BaseController
     private function buildInsertData($tableColumns) {
         unset($tableColumns[0]);
         $mapColumn = \Config::get('sso-postback.map');
-        $buildData = [];
+        $buildData = [
+            'remember_token' => ''
+        ];
         foreach($tableColumns as $column) {
             $params = [];
             $getColum = $column;
